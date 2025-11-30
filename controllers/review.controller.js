@@ -80,3 +80,66 @@ export const createReview = async (req, res) => {
     return res.status(500).json({ msg: "Failed to create review" })
   }
 }
+
+export const getItemReviews = async (req, res) => {
+  try {
+    const { itemId } = req.params;
+    const { page = 1, limit = 10, sortBy = "createdAt", order = "desc" } = req.query;
+
+    const filter = {
+      itemId,
+      reviewType: "item",
+      isVisible: true,
+    };
+
+    const sortOptions = {};
+    sortOptions[sortBy] = order === "asc" ? 1 : -1;
+
+    const reviews = await Review.find(filter)
+      .sort(sortOptions)
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+    const count = await Review.countDocuments(filter);
+
+    const stats = await Review.aggregate([
+      { $match: filter },
+      {
+        $group: {
+          _id: null,
+          averageRating: { $avg: "$rating" },
+          totalReviews: { $sum: 1 },
+          ratingDistribution: {
+            $push: "$rating",
+          },
+        },
+      },
+    ]);
+
+    const ratingStats = stats[0] || {
+      averageRating: 0,
+      totalReviews: 0,
+    };
+
+    const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    if (ratingStats.ratingDistribution) {
+      ratingStats.ratingDistribution.forEach((rating) => {
+        distribution[rating] = (distribution[rating] || 0) + 1;
+      });
+    }
+
+    return res.status(200).json( {
+      reviews,
+      totalPages: Math.ceil(count / limit),
+      currentPage: Number(page),
+      totalReviews: count,
+      averageRating: ratingStats.averageRating ? Math.round(ratingStats.averageRating * 10) / 10 : 0,
+      ratingDistribution: distribution,
+    });
+
+
+  } catch (error) {
+    console.error(" Get item reviews error:", error);
+    return res.status(500).json({msg : "Failed to fetch reviews"})
+  }
+};
