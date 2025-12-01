@@ -296,3 +296,31 @@ export const deleteReview = async (req, res) => {
         return res.status(500).json({ msg: "Failed to delete review" });
     }
 };
+export const addResponse = async (req, res) => {
+    try {
+        const { reviewId } = req.params;
+        const { comment } = req.body;
+
+        const review = await Review.findById(reviewId);
+
+        if (!review) {
+            return res.status(404).json({ msg: "Review not found" });
+        }
+
+        if (review.revieweeId.toString() !== req.user.userId && req.user.role !== "admin") {
+            return res.status(403).json({ msg: "Only the reviewee can respond to this review" });
+        }
+
+        review.response = {
+            comment,
+            respondedAt: new Date()
+        };
+
+        await review.save();
+
+        return res.status(201).json({ review, msg: "Response added successfully" });
+    } catch (error) {
+        console.error("Add response error:", error);
+        return res.status(500).json({ msg: "Failed to add response" });
+    }
+};
