@@ -221,3 +221,24 @@ export const getReviewsByReviewer = async (req, res) => {
     return res.status(500).json({ msg: "Failed to fetch reviews" });
   }
 };
+
+
+export const getReviewById = async (req, res) => {
+  try {
+   
+    const { reviewId } = req.params
+
+    const review = await Review.findById(reviewId);
+
+    if (!review) {
+      return res.status(404).json({ msg: "Review not found" });
+    }
+
+    return res.status(200).json(review);
+
+  } catch (error) {
+
+    console.error("Get review by ID error:", error);
+    return res.status(500).json({ msg: "Failed to fetch review" });
+  }
+};
