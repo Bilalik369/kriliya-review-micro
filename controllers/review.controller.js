@@ -143,3 +143,58 @@ export const getItemReviews = async (req, res) => {
     return res.status(500).json({msg : "Failed to fetch reviews"})
   }
 };
+export const getUserReviews = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { page = 1, limit = 10, reviewType } = req.query;
+
+    const filter = {
+      revieweeId: userId,
+      isVisible: true,
+    };
+
+    if (reviewType) {
+      filter.reviewType = reviewType;
+    }
+
+    const review = await Review.find(filter)
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+
+    const count = await Review.countDocuments(filter);
+
+ 
+    const stats = await Review.aggregate([
+      { $match: filter },
+      {
+        $group: {
+          _id: null,
+          averageRating: { $avg: "$rating" },
+          totalReviews: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const ratingStats = stats[0] || {
+      averageRating: 0,
+      totalReviews: 0,
+    };
+
+   
+    return res.status(200).json({
+      review,
+      totalPages: Math.ceil(count / limit),
+      currentPage: Number(page),
+      totalReviews: count,
+      averageRating: ratingStats.averageRating
+        ? Math.round(ratingStats.averageRating * 10) / 10
+        : 0,
+    });
+
+  } catch (error) {
+    console.error("Get user reviews error:", error);
+    return res.status(500).json({ msg: "Failed to fetch reviews" });
+  }
+};
