@@ -198,3 +198,26 @@ export const getUserReviews = async (req, res) => {
     return res.status(500).json({ msg: "Failed to fetch reviews" });
   }
 };
+
+export const getReviewsByReviewer = async (req, res) => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+
+    const reviews = await Review.find({ reviewerId: req.user.userId })
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+    const count = await Review.countDocuments({ reviewerId: req.user.userId });
+
+    return res.status(200).json({
+      reviews,
+      totalPages: Math.ceil(count / limit),
+      currentPage: Number(page),
+      totalReviews: count,
+    });
+  } catch (error) {
+    console.error("Get reviews by reviewer error:", error);
+    return res.status(500).json({ msg: "Failed to fetch reviews" });
+  }
+};
