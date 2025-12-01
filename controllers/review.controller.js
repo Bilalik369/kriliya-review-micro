@@ -274,3 +274,25 @@ export const updateReview  =async(req , res)=>{
          return res.status(500).json({ msg: "Failed to update review" });
     }
 }
+
+export const deleteReview = async (req, res) => {
+    try {
+        const { reviewId } = req.params;
+
+        const review = await Review.findById(reviewId);
+        if (!review) {
+            return res.status(404).json({ msg: "Review not found" });
+        }
+
+        if (review.reviewerId.toString() !== req.user.userId && req.user.role !== "admin") {
+            return res.status(403).json({ msg: "You are not authorized to delete this review" });
+        }
+
+        await Review.findByIdAndDelete(reviewId);
+
+        return res.status(200).json({ msg: "Review deleted successfully" });
+    } catch (error) {
+        console.error("Delete review error:", error);
+        return res.status(500).json({ msg: "Failed to delete review" });
+    }
+};
