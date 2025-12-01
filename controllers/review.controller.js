@@ -242,3 +242,35 @@ export const getReviewById = async (req, res) => {
     return res.status(500).json({ msg: "Failed to fetch review" });
   }
 };
+
+export const updateReview  =async(req , res)=>{
+    try {
+        const {reviewId} = req.params;
+        const {rating , title , comment , photos , aspects} = req.body;
+
+        const review = await Review.findById(reviewId)
+
+        if(!review){
+            return res.status(200).json({msg : " Review not found"})
+        }
+        if(review.reviewerId.toString() !== req.user.userId && req.user.role !== "admin"){
+            return res.status(403).json({msg : "You are not authorized to update this review"})
+        }
+        if(rating) review.rating = rating;
+        if(title) review.title = title;
+        if(comment) review.comment  = comment;
+        if(photos) review.photos = photos;
+        if (aspects) review.aspects = { ...review.aspects, ...aspects };
+        
+        await review.save();
+
+        return res.status(201).json({
+            msg:" Review updated successfully",
+            review
+        })
+
+    } catch (error) {
+         console.error("Update review error:", error);
+         return res.status(500).json({ msg: "Failed to update review" });
+    }
+}
