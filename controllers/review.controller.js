@@ -325,25 +325,30 @@ export const addResponse = async (req, res) => {
     }
 };
 
-export const markHelpful = async(req , res)=>{
-    try {
-        const {reviewId } = req.params
+export const markHelpful = async (req, res) => {
+  try {
+    const { reviewId } = req.params;
+    const userId = req.user.userId; 
 
-        const review =await Review.findById(reviewId)
+    const review = await Review.findById(reviewId);
 
-        if(!review){
-            return res.status(404).json({msg: "review not found"})
-        }
-
-        review.helpfulCount += 1
-
-        await review.save();
-
-        return res.status(201).json({review , msg: "Review marked as helpful"})
-         
-
-    } catch (error) {
-        console.error("Add helpfuk error:", error);
-        return res.status(500).json({ msg: "Failed to add hekpful" });
+    if (!review) {
+      return res.status(404).json({ msg: "Review not found" });
     }
-}
+
+    if (review.helpfulBy.includes(userId)) {
+      return res.status(400).json({ msg: "You already marked this review as helpful" });
+    }
+
+    review.helpfulCount += 1;
+    review.helpfulBy.push(userId);
+
+    await review.save();
+
+    return res.status(201).json({ review, msg: "Review marked as helpful" });
+
+  } catch (error) {
+    console.error("Add helpful error:", error);
+    return res.status(500).json({ msg: "Failed to add helpful" });
+  }
+};

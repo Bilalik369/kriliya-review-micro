@@ -84,6 +84,9 @@ const reviewSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+      helpfulBy: {
+         type: [String], default: []
+        },
     reportCount: {
       type: Number,
       default: 0,
