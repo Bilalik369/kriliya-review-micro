@@ -324,3 +324,26 @@ export const addResponse = async (req, res) => {
         return res.status(500).json({ msg: "Failed to add response" });
     }
 };
+
+export const markHelpful = async(req , res)=>{
+    try {
+        const {reviewId } = req.params
+
+        const review =await Review.findById(reviewId)
+
+        if(!review){
+            return res.status(404).json({msg: "review not found"})
+        }
+
+        review.helpfulCount += 1
+
+        await review.save();
+
+        return res.status(201).json({review , msg: "Review marked as helpful"})
+         
+
+    } catch (error) {
+        console.error("Add helpfuk error:", error);
+        return res.status(500).json({ msg: "Failed to add hekpful" });
+    }
+}
