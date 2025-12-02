@@ -352,3 +352,30 @@ export const markHelpful = async (req, res) => {
     return res.status(500).json({ msg: "Failed to add helpful" });
   }
 };
+
+export const reportReview = async(req , res)=>{
+    try {
+        const {reviewId}= req.params 
+        const userId = req.user.userId
+
+        const review = await Review.findById(reviewId)
+
+        if(!review){
+            return res.status(404).json({msg : "review not found"})
+        }
+
+        if(review.reportBy.includes(userId)){
+            return res.status(400).json({msg:"you already marked this review as report"})
+        }
+
+
+        review.reportCount += 1
+        review.reportBy.push(userId)
+        await review.save();
+        return res.status(201).json({review , msg :"Review reported successfully"})
+
+    } catch (error) { 
+          console.error("Add helpful error:", error);
+          return res.status(500).json({ msg: "Failed to add helpful" });
+    }
+}

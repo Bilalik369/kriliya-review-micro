@@ -91,6 +91,10 @@ const reviewSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    reportBy : {
+        type : [String],
+        default : []
+    }
   },
   {
     timestamps: true,
